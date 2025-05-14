@@ -189,6 +189,10 @@ export const saveToFirebase = async (
   elements: readonly SyncableExcalidrawElement[],
   appState: AppState,
 ) => {
+  if (!process.env.REACT_APP_FIREBASE_CONFIG) {
+    return null;
+  }
+
   const { roomId, roomKey, socket } = portal;
   if (
     // bail if no room exists as there's nothing we can do at this point
@@ -274,6 +278,10 @@ export const loadFilesFromFirebase = async (
   decryptionKey: string,
   filesIds: readonly FileId[],
 ) => {
+  if (!process.env.REACT_APP_FIREBASE_CONFIG) {
+    return null;
+  }
+
   const loadedFiles: BinaryFileData[] = [];
   const erroredFiles = new Map<FileId, true>();
 

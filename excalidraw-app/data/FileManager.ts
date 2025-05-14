@@ -48,7 +48,7 @@ export class FileManager {
     getFiles: (fileIds: FileId[]) => Promise<{
       loadedFiles: BinaryFileData[];
       erroredFiles: Map<FileId, true>;
-    }>;
+    } | null>;
     saveFiles: (data: { addedFiles: Map<FileId, BinaryFileData> }) => Promise<{
       savedFiles: Map<FileId, BinaryFileData>;
       erroredFiles: Map<FileId, BinaryFileData>;
@@ -107,7 +107,7 @@ export class FileManager {
     }
 
     try {
-      const { savedFiles, erroredFiles } = await this._saveFiles({
+      const response = await this._saveFiles({
         addedFiles,
       });
 
@@ -135,7 +135,7 @@ export class FileManager {
   ): Promise<{
     loadedFiles: BinaryFileData[];
     erroredFiles: Map<FileId, true>;
-  }> => {
+  } | null> => {
     if (!ids.length) {
       return {
         loadedFiles: [],
@@ -147,7 +147,13 @@ export class FileManager {
     }
 
     try {
-      const { loadedFiles, erroredFiles } = await this._getFiles(ids);
+      const response = await this._getFiles(ids);
+
+      if (!response) {
+        return null;
+      }
+
+      const { loadedFiles, erroredFiles } = response;
 
       for (const file of loadedFiles) {
         this.savedFiles.set(file.id, this.getFileVersion(file));

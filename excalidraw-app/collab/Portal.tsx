@@ -19,6 +19,22 @@ import type {
   SocketUpdateDataSource,
   SyncableExcalidrawElement,
 } from "../data";
+
+import { TCollabClass } from "./Collab";
+
+import { ExcalidrawElement } from "../../element/types";
+import {
+  WS_EVENTS,
+  FILE_UPLOAD_TIMEOUT,
+  WS_SCENE_EVENT_TYPES,
+} from "../app_constants";
+import { UserIdleState } from "../../types";
+import { trackEvent } from "../../analytics";
+import { throttle } from "lodash";
+import { newElementWith } from "../../element/mutateElement";
+import { BroadcastedExcalidrawElement } from "./reconciliation";
+import { encryptData } from "../../data/encryption";
+import { splitArrayByByteSize } from "../../packages/utils";
 import type { TCollabClass } from "./Collab";
 import type { Socket } from "socket.io-client";
 
@@ -148,6 +164,32 @@ class Portal {
       throw new Error("syncAll must be true when sending SCENE.INIT");
     }
 
+    const groupedElements = splitArrayByByteSize(allElements, 1000000);
+
+    for (let i = 0; i < groupedElements.length; i += 1) {
+      const elems = groupedElements[i];
+      // sync out only the elements we think we need to to save bandwidth.
+      // periodically we'll resync the whole thing to make sure no one diverges
+      // due to a dropped message (server goes down etc).
+      const syncableElements = elems.reduce(
+        (acc, element: BroadcastedExcalidrawElement, idx, elements) => {
+          if (
+            (syncAll ||
+              !this.broadcastedElementVersions.has(element.id) ||
+              element.version >
+                this.broadcastedElementVersions.get(element.id)!) &&
+            isSyncableElement(element)
+          ) {
+            acc.push({
+              ...element,
+              // z-index info for the reconciler
+              parent: idx === 0 ? "^" : elements[idx - 1]?.id,
+            });
+          }
+          return acc;
+        },
+        [] as BroadcastedExcalidrawElement[],
+      );
     // sync out only the elements we think we need to to save bandwidth.
     // periodically we'll resync the whole thing to make sure no one diverges
     // due to a dropped message (server goes down etc).
@@ -163,23 +205,24 @@ class Portal {
       return acc;
     }, [] as SyncableExcalidrawElement[]);
 
-    const data: SocketUpdateDataSource[typeof updateType] = {
-      type: updateType,
-      payload: {
-        elements: syncableElements,
-      },
-    };
+      const data: SocketUpdateDataSource[typeof updateType] = {
+        type: updateType,
+        payload: {
+          elements: syncableElements,
+        },
+      };
 
-    for (const syncableElement of syncableElements) {
-      this.broadcastedElementVersions.set(
-        syncableElement.id,
-        syncableElement.version,
-      );
+      for (const syncableElement of syncableElements) {
+        this.broadcastedElementVersions.set(
+          syncableElement.id,
+          syncableElement.version,
+        );
+      }
+
+      this.queueFileUpload();
+
+      await this._broadcastSocketData(data as SocketUpdateData);
     }
-
-    this.queueFileUpload();
-
-    await this._broadcastSocketData(data as SocketUpdateData);
   };
 
   broadcastIdleChange = (userState: UserIdleState) => {

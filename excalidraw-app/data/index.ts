@@ -72,6 +72,45 @@ const generateRoomId = async () => {
   return bytesToHexString(buffer);
 };
 
+/**
+ * Right now the reason why we resolve connection params (url, polling...)
+ * from upstream is to allow changing the params immediately when needed without
+ * having to wait for clients to update the SW.
+ *
+ * If collabServerUrl is provided, we use that instead (useful for packages)
+ * If REACT_APP_WS_SERVER_URL env is set, we use that instead (useful for forks)
+ */
+export const getCollabServer = async (
+  collabServerUrl?: string,
+): Promise<{
+  url: string;
+  polling: boolean;
+}> => {
+  if (collabServerUrl) {
+    return {
+      url: collabServerUrl,
+      polling: true,
+    };
+  }
+
+  if (process.env.REACT_APP_WS_SERVER_URL) {
+    return {
+      url: process.env.REACT_APP_WS_SERVER_URL,
+      polling: true,
+    };
+  }
+
+  try {
+    const resp = await fetch(
+      `${process.env.REACT_APP_PORTAL_URL}/collab-server`,
+    );
+    return await resp.json();
+  } catch (error) {
+    console.error(error);
+    throw new Error(t("errors.cannotResolveCollabServer"));
+  }
+};
+
 export type EncryptedData = {
   data: ArrayBuffer;
   iv: Uint8Array;
