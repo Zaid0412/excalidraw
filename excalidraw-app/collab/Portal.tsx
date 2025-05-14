@@ -11,7 +11,6 @@ import type {
   SocketId,
 } from "@excalidraw/excalidraw/types";
 
-import { WS_EVENTS, FILE_UPLOAD_TIMEOUT, WS_SUBTYPES } from "../app_constants";
 import { isSyncableElement } from "../data";
 
 import type {
@@ -20,21 +19,13 @@ import type {
   SyncableExcalidrawElement,
 } from "../data";
 
-import { TCollabClass } from "./Collab";
 
-import { ExcalidrawElement } from "../../element/types";
 import {
   WS_EVENTS,
   FILE_UPLOAD_TIMEOUT,
-  WS_SCENE_EVENT_TYPES,
+  WS_SUBTYPES
 } from "../app_constants";
-import { UserIdleState } from "../../types";
-import { trackEvent } from "../../analytics";
-import { throttle } from "lodash";
-import { newElementWith } from "../../element/mutateElement";
-import { BroadcastedExcalidrawElement } from "./reconciliation";
-import { encryptData } from "../../data/encryption";
-import { splitArrayByByteSize } from "../../packages/utils";
+import { splitArrayByByteSize } from "../../packages/utils/src/export";
 import type { TCollabClass } from "./Collab";
 import type { Socket } from "socket.io-client";
 
@@ -167,29 +158,6 @@ class Portal {
     const groupedElements = splitArrayByByteSize(allElements, 1000000);
 
     for (let i = 0; i < groupedElements.length; i += 1) {
-      const elems = groupedElements[i];
-      // sync out only the elements we think we need to to save bandwidth.
-      // periodically we'll resync the whole thing to make sure no one diverges
-      // due to a dropped message (server goes down etc).
-      const syncableElements = elems.reduce(
-        (acc, element: BroadcastedExcalidrawElement, idx, elements) => {
-          if (
-            (syncAll ||
-              !this.broadcastedElementVersions.has(element.id) ||
-              element.version >
-                this.broadcastedElementVersions.get(element.id)!) &&
-            isSyncableElement(element)
-          ) {
-            acc.push({
-              ...element,
-              // z-index info for the reconciler
-              parent: idx === 0 ? "^" : elements[idx - 1]?.id,
-            });
-          }
-          return acc;
-        },
-        [] as BroadcastedExcalidrawElement[],
-      );
     // sync out only the elements we think we need to to save bandwidth.
     // periodically we'll resync the whole thing to make sure no one diverges
     // due to a dropped message (server goes down etc).

@@ -57,6 +57,7 @@ import {
   INITIAL_SCENE_UPDATE_TIMEOUT,
   LOAD_IMAGES_TIMEOUT,
   WS_SUBTYPES,
+  STORAGE_KEYS,
   SYNC_FULL_SCENE_INTERVAL_MS,
   WS_EVENTS,
 } from "../app_constants";
@@ -310,6 +311,8 @@ class Collab extends PureComponent<CollabProps, CollabState> {
             room: this.portal.roomId,
           }),
         );
+      } catch (error) {
+        console.error("Error saving collab force flag to localStorage:", error);
       }
     }
   });

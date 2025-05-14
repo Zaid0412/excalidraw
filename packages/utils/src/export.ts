@@ -243,11 +243,11 @@ export function splitArrayByByteSize(
   return subsets;
 }
 
-export { serializeAsJSON, serializeLibraryAsJSON } from "../data/json";
+export { serializeAsJSON, serializeLibraryAsJSON } from '../../excalidraw/data/json' 
 export {
   loadFromBlob,
   loadSceneOrLibraryFromBlob,
   loadLibraryFromBlob,
-} from "../data/blob";
-export { getFreeDrawSvgPath } from "../renderer/renderElement";
-export { mergeLibraryItems } from "../data/library";
+} from "../../excalidraw/data/blob";
+export { getFreeDrawSvgPath } from "../../element/src/renderElement";
+export { mergeLibraryItems } from "../../excalidraw/index";
