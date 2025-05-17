@@ -1,4 +1,4 @@
-import rough from "roughjs/bin/rough";
+import rough from "roughjs/bin/rough.js";
 import { getStroke } from "perfect-freehand";
 
 import { isRightAngleRads } from "@excalidraw/math";

@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { RoughCanvas } from "roughjs/bin/canvas";
-import rough from "roughjs/bin/rough";
+import rough from "roughjs/bin/rough.js";
 import clsx from "clsx";
 import { nanoid } from "nanoid";
 

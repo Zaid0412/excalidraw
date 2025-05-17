@@ -31,7 +31,7 @@ import type {
 } from "./types";
 
 import type { Drawable, Options } from "roughjs/bin/core";
-import type { RoughGenerator } from "roughjs/bin/generator";
+import type { RoughGenerator } from "roughjs/bin/generator.js";
 import type { Point as RoughPoint } from "roughjs/bin/geometry";
 
 const getDashArrayDashed = (strokeWidth: number) => [8, 8 + strokeWidth];
